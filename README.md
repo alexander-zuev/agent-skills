@@ -1,13 +1,11 @@
 # Agent Skills
 
-[![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills-black)](https://agentskills.io)
+[![skills.sh](https://skills.sh/b/alexander-zuev/agent-skills)](https://skills.sh/alexander-zuev/agent-skills)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **Software architecture for coding agents: DDD, CQRS, hexagonal design, and Feature-Sliced frontends, packaged as skills.**
 
-> **Why I made these**
->
-> Coding agents write most of my code. Out of the box, it puts business rules in route handlers, turns failures into strings, and retries payments without an idempotency key. These skills are the rules I enforce in code review, written so the agent follows them before I have to ask.
+> Coding agents write code that runs but does not last. These skills make them follow the architecture I enforce in review. I use them every day on my own products.
 
 ```bash
 npx skills add alexander-zuev/agent-skills
