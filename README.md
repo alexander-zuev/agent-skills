@@ -85,18 +85,51 @@ Evidence before you build.
 - Validation against existing tools, competitor reviews, and market signals.
 - A scored, ranked list of ideas with links to the evidence.
 
-## How the skills work together
+## Key concepts by skill
 
 ```mermaid
-flowchart TD
-  S[tech-spec] -->|designs| B[cloudflare-backend]
-  S -->|designs| F[tanstack-frontend]
-  B --> T[typescript-standards]
-  F --> T
-  B --> C[composition-root]
+mindmap
+  root((Agent Skills))
+    typescript-standards
+      Parse, don't validate
+      Typed errors, one logging boundary
+      Branded types and state machines
+      Domain, service, and adapter roles
+      Deep modules and narrow ports
+      Tests through real seams
+    cloudflare-backend
+      Thin entrypoints
+      Commands, events, and queries
+      Message bus and registry
+      Unit of work and outbox
+      Idempotency at three layers
+      Repositories and domain entities
+      Queues, Workflows, Durable Objects
+    tanstack-frontend
+      Feature-Sliced Design
+      Fowler component layers
+      Query and mutation factories
+      Router and Query cache ownership
+      Server state versus client state
+      Loading, error, and pending states
+    composition-root
+      One graph per invocation
+      Binding adapters behind ports
+      No env in inner code
+      Outward refactor path
+    tech-spec
+      Alternatives and one recommendation
+      Typed contracts
+      Call stacks and data flow
+      Red-green test plan
+    product-research
+      Reddit pain points
+      Competitor reviews
+      Market signals
+      Scored idea list
 ```
 
-Agents load a skill when the task matches it. A backend task loads `cloudflare-backend`; it defers to `typescript-standards` for types, errors, and module design.
+Agents load a skill when the task matches it. `cloudflare-backend` and `tanstack-frontend` defer to `typescript-standards` for types, errors, and module design.
 
 ## Install
 
