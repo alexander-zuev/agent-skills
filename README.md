@@ -10,8 +10,6 @@
 > I build products on my own, and coding agents write most of my code. Out of the box, that code is bad. It runs, but it puts business rules in route handlers, turns every failure into a string, retries a payment without an idempotency key, and invents a new data layer for each feature. A month later, every change fights the codebase.
 >
 > I stopped waiting for the next model to fix this. These skills are the rules I enforce in code review, written so the agent follows them before I have to ask. They do not make the agent perfect. They make it write much less code that I have to throw away.
->
-> — [Alexander Zuev](https://github.com/alexander-zuev)
 
 ```bash
 npx skills add alexander-zuev/agent-skills
