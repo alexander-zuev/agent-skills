@@ -1,6 +1,7 @@
 ---
 name: composition-root
-description: Composition roots for TanStack Start apps on Cloudflare Workers. Use when adding a binding-backed service or refactoring raw runtime dependencies out of inner code.
+description: "Dependency injection for Cloudflare Workers: one composition root and binding adapters behind ports. Use when adding a binding-backed service or removing `env` from inner code."
+license: Apache-2.0
 ---
 
 # Cloudflare Composition Root

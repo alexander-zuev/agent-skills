@@ -1,6 +1,7 @@
 ---
 name: tech-spec
-description: Write a typed call-stack architecture handoff — TypeScript contracts plus execution flows, design only. Use when the user asks for a tech spec, implementation spec, architecture handoff, or a design before code.
+description: "Typed architecture spec before code: alternatives, contracts, call stacks, and a test plan. Use when asked for a tech spec, design, or architecture handoff."
+license: Apache-2.0
 ---
 
 # Tech Spec

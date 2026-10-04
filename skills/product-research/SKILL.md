@@ -1,9 +1,7 @@
 ---
 name: product-research
-description: |
-  Research and validate SaaS/app ideas for a target niche. Two-pass process: (1) Reddit community analysis for raw pain points, (2) corroboration via existing tool reviews, competitor research, and freshness verification. Outputs a scored, ranked list of product ideas with evidence links.
-  TRIGGER when: user asks to research a niche, validate app ideas, find product opportunities, analyze a community for pain points, or wants market research for a specific audience.
-  SKIP for: technical implementation, building the actual product.
+description: "Validate product ideas from Reddit pain points, competitor reviews, and market signals, with a scored list. Use when researching a niche or an app idea."
+license: Apache-2.0
 allowed-tools: Bash(playwright-cli *) Bash(playwright-cli) Bash(sleep *)
 ---
 
