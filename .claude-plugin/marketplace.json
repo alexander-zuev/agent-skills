@@ -1,0 +1,25 @@
+{
+  "name": "agent-skills",
+  "owner": {
+    "name": "Alexander Zuev"
+  },
+  "metadata": {
+    "description": "Skills for TanStack Start apps on Cloudflare Workers"
+  },
+  "plugins": [
+    {
+      "name": "agent-skills",
+      "description": "TypeScript standards, Cloudflare backend, TanStack frontend, composition root, tech spec, and product research skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/typescript-standards",
+        "./skills/cloudflare-backend",
+        "./skills/tanstack-frontend",
+        "./skills/composition-root",
+        "./skills/tech-spec",
+        "./skills/product-research"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "agent-skills",
+  "description": "Skills for TanStack Start apps on Cloudflare Workers",
+  "author": {
+    "name": "Alexander Zuev"
+  }
+}

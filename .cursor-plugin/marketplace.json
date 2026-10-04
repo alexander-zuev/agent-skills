@@ -1,0 +1,13 @@
+{
+  "name": "agent-skills",
+  "owner": {
+    "name": "Alexander Zuev"
+  },
+  "plugins": [
+    {
+      "name": "agent-skills",
+      "source": "./",
+      "description": "Skills for TanStack Start apps on Cloudflare Workers"
+    }
+  ]
+}
