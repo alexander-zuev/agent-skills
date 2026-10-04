@@ -1,6 +1,6 @@
 # Agent Skills
 
-[![skills.sh](https://skills.sh/b/alexander-zuev/agent-skills)](https://skills.sh/alexander-zuev/agent-skills)
+[![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills-black)](https://agentskills.io)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **Software architecture for coding agents: DDD, CQRS, hexagonal design, and Feature-Sliced frontends, packaged as skills.**
