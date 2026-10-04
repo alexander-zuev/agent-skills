@@ -404,7 +404,7 @@ Never use `vi.mock` or `jest.mock`; test through real seams. Before you write or
 
 ## TypeScript style and safety
 
-No `any`, no `!`, and no `as` cast without a `SAFETY:` comment. Before you write or review TypeScript, read [style and files](references/style-and-files.md). It covers compiler settings, casts, imports, exports, and file names.
+No `any`, no non-null assertions, and no `as` cast without a `SAFETY:` comment. Before you write or review TypeScript, read [style and files](references/style-and-files.md). It covers compiler settings, casts, imports, exports, and file names.
 
 ## Comments and JSDoc
 

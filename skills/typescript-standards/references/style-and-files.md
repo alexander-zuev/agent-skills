@@ -29,7 +29,7 @@ Mutation is acceptable inside localized imperative shell code, performance-sensi
 Avoid:
 
 - `any`
-- non-null assertions (`!`)
+- non-null assertions (the postfix exclamation mark)
 - casts with `as Type`
 
 `as const` is fine.
@@ -50,7 +50,7 @@ Rare `any` also requires a targeted oxlint ignore and justification:
 type Fn = (...args: any[]) => unknown;
 ```
 
-Do not use `!`. Branch, parse, or refine instead.
+Do not use non-null assertions. Branch, parse, or refine instead.
 
 ## Imports, exports, and files
 
