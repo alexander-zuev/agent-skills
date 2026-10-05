@@ -400,7 +400,8 @@ Retrying should not rely on “probably safe” side effects.
 
 ## Testing
 
-Never use `vi.mock` or `jest.mock`; test through real seams. Before you write or review a test, read [testing](references/testing.md).
+Never use `vi.mock` or `jest.mock`; test through real seams. Before you write, review, or speed up a test, read [testing](references/testing.md).
+It is the default for every project. A project testing document records only exceptions.
 
 ## TypeScript style and safety
 

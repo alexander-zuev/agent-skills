@@ -456,6 +456,10 @@ Env names and deploy scripts are per-project — read `wrangler.jsonc` + `packag
 
 Before a schema change, migration, or database query, read [database workflow](references/database-workflow.md). It covers D1 and Postgres detection, migration commands, migration rules, and constraint ownership.
 
+## Testing
+
+Before you write, review, or speed up a Worker, binding, or database test, read [Workers testing](references/testing.md).
+
 ## Security and operations
 
 For Turnstile setup, repair, or CAPTCHA migration, use the official [Turnstile Spin skill](https://github.com/cloudflare/skills/tree/main/skills/turnstile-spin) first.
