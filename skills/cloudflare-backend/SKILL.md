@@ -467,6 +467,7 @@ Start with its agent workflow, not manual setup or the dashboard.
 
 For authentication, authorization, public inputs, uploads, or secret handling, read [security](references/security.md).
 For backend performance, logging, metrics, or alerts, read [operations](references/operations.md).
+To measure the speed or failures of a deployed Worker, read [measure a Worker](references/measure-worker.md).
 
 ### Secrets — dotenvx
 
