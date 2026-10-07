@@ -12,6 +12,15 @@ Never add a test only to raise coverage.
 Report new tests separately from existing suite results. State which changed behavior the new tests prove.
 A passing suite does not prove behavior it never exercises.
 
+Prove that each new or changed test protects behavior. Break the code under test on purpose, run the test, and see it fail. Then undo the break.
+A test that still passes protects nothing. Fix the test or remove it.
+
+A test assumes the code under test is correct. Hard-to-test code is a design problem, not a test problem.
+When a test needs hacks, many branches, or real time to pass, do not hack around the code. Report the design problem: the code, the rule or pattern it breaks, and a better shape.
+
+Find missing tests by behavior, never by a coverage number. Each public entrypoint, command, and error path needs a test that fails when it breaks.
+Cover critical paths first, such as payments, authentication, and the product's core action.
+
 Add an end-to-end test whenever the behavior can be exercised through its real public entrypoint in the normal test environment without unreliable third parties or unreasonable setup, runtime, or cost. Add lower-level tests when they provide extra coverage for important cases.
 
 Prefer confidence-oriented tests:
@@ -45,6 +54,11 @@ Each test folder maps to one runtime:
 
 No test project runs a file in the `tests/` root. Lint rejects it.
 Use Pytest fixtures for Python.
+
+## Library versions
+
+Test APIs change between major versions. Before you use or change a test API, read the installed version of Vitest, the Cloudflare Vitest plugin, MSW, and the browser provider.
+Then read the official documentation for that version. The project testing document wins over generic advice.
 
 ## Fixtures
 
@@ -95,8 +109,9 @@ A flaky test has a cause: shared state, unawaited work, real time, test order, o
 Fix the cause. Never fix flakiness with retries, a longer timeout, `.skip`, or a sleep.
 Prove a flakiness fix: the changed file passes 3 runs in a row.
 
-A test setup change needs timing evidence. Setup includes pools, isolation, parallelism, and `globalSetup`.
-Measure before and after with the same command on the same machine.
+A speed change needs timing evidence. This includes a change to one test and a setup change, such as pools, isolation, parallelism, and `globalSetup`.
+Run the same command on the same machine at least 3 times before and 3 times after. Compare the medians.
+The gain must be larger than the difference between runs on the same side. A smaller gain is noise.
 Record the decision and its numbers in the project testing document.
 Profile before you change setup. Use the reporter's slowest files and Vitest import durations.
 
