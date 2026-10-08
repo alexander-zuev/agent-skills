@@ -22,7 +22,7 @@
 ### Postgres + Hyperdrive
 
 - Local: Docker Postgres from the repo's `db/` dir (custom image may add `pg_cron`/`pg_squeeze`; init SQL creates the app role and a test DB). `pnpm db:start` / `db:stop` / `db:reset`; Drizzle Studio via `db:studio:<env>`.
-- Driver: `postgres` (postgres.js). Two DB users: superuser for DDL/migrations, app role for runtime DML.
+- Driver: `pg` through better-ship `connectPostgres`: one `pg.Pool` with `max: 1` per invocation, returned without `await`. Drizzle with postgres.js over Hyperdrive is unsupported. Two DB users: superuser for DDL/migrations, app role for runtime DML.
 - Prod: managed Postgres (e.g. PlanetScale) — identify the provider from `hyperdrive.origin`; query via the provider's CLI/MCP.
 - Drizzle env selection: `DRIZZLE_ENV` + dotenvx-encrypted env files.
 - Tests hit real local Postgres via `localConnectionString` in wrangler.jsonc (Hyperdrive doesn't exist in Vitest).

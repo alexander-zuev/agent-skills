@@ -29,7 +29,8 @@ Postgres through Hyperdrive:
 
 1. `globalSetup` creates the test database, resets the schema, runs the migrations, and provides the URLs.
 2. The base `test` checks that Hyperdrive and the test point at the same database before it empties any table.
-3. postgres.js clients in workerd never end. When one runner serves many invocations, add `idle_timeout` to the Hyperdrive URL, or the run uses all connections.
+3. Each test runs as its own request, and a `pg` socket from one test hangs in the next. One test-scoped fixture owns every pool a test opens and closes them at cleanup, after background work settles. The runner never ends a request, so an unclosed pool holds its connection and a full run exhausts Postgres connections.
+4. Vitest cannot load the workerd builds of `pg-protocol` and `pg-cloudflare`. Alias both to their CommonJS `dist/index.js` in the root `resolve.alias`, and exclude `pg` from `deps.optimizer`.
 
 A `clock` fixture changes `Date` in the Worker only. Postgres `now()` keeps real time.
 

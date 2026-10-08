@@ -236,6 +236,7 @@ Single choke point from typed message to handler; the bus **routes**, it does no
 Transaction rules:
 - **No cross-boundary I/O inside a tx** — no fetch/queue/R2 while holding a connection (Hyperdrive pool exhaustion).
 - One aggregate per tx. Retry the whole UoW at the caller boundary. Never nest UoWs.
+- **Postgres: one connection per invocation.** Parallel units of work wait for each other's transaction. A read outside the transaction (`readDb`) inside a unit of work waits on its own connection; the adapter throws instead of hanging.
 - Queries bypass UoW entirely; the read path may skip repositories — query handlers can do inline Drizzle `select({...})` → DTO. The DTO is a product resource, not a row. Do not leak a storage accident. Keep expensive associations off unless the caller asks.
 
 ### Outbox relay
@@ -399,6 +400,7 @@ Class-based consumer in `entrypoints/queue/`:
 ### Cloudflare Workflows
 
 - One unit of work per step — steps are the retry boundary.
+- Build dependencies inside each `step.do()`, never in the constructor: a Hyperdrive connection must not cross steps, and the engine can hibernate between them.
 - **Fetch-then-record**: external call in one step, outcome recorded in the next; a retried step must never redo a committed effect.
 - Intent → effect → outcome: mint durable intent (DB row) before the external effect.
 - Map non-retryable typed errors to `NonRetryableError`; internal vs external step configs carry the retry policies.
@@ -406,6 +408,8 @@ Class-based consumer in `entrypoints/queue/`:
 ### Durable Objects
 
 In use: rate limiting (`RateLimiterDO`), outbox relay, agents/gates (Agents SDK), container supervisors. Wrap with `Sentry.instrumentDurableObjectWithSentry(...)`.
+
+The constructor runs once per object in memory and serves many requests and alarms. Build dependencies per method or alarm, not in the constructor, and close the database at the end: Hyperdrive cleans up a Durable Object's socket only at hibernation or eviction, and an open socket blocks hibernation.
 
 Migrations: each change = new migration, unique tag, append-only — never edit or remove shipped entries. **Default `new_sqlite_classes`** for new DOs; `new_classes` only with a documented reason (legacy DOs exist — don't migrate them unprompted). Use the new class name in code after rename; never manually create destination classes for rename/transfer.
 
