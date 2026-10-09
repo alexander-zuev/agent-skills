@@ -16,3 +16,11 @@ Do not substitute an unavailable metric with an invented value.
 
 Verify affected flows on mobile devices and throttled slow 3G.
 Monitor Core Web Vitals in production. Backend endpoint targets belong to the backend skill.
+
+## Web fonts
+
+- Self-host WOFF2 variable fonts. One file per font holds every weight.
+- Preload only the subsets that the locale uses, with `as="font"`, `type="font/woff2"`, and `crossorigin`. A preload ignores `unicode-range`.
+- Keep the preload links in a pure module keyed by locale. The route `head()` only calls it.
+- Add a metric-matched fallback `@font-face` (`size-adjust`, `ascent-override`, `descent-override`) of the same category: sans for sans. Compute the values from the shipped files with Capsize.
+- On Cloudflare Workers, set TanStack Start `responseLinkHeader` with a fonts-only filter. Cloudflare sends the `103 Early Hints`; a Worker cannot.
