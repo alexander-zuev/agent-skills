@@ -419,7 +419,15 @@ These rules do not apply automatically to desktop or mixed surfaces.
 
 ### Browser support
 
-The baseline is the last 3 years of browsers and OS releases, counted from today. Use current platform APIs as they are (`URL.parse`, `Array.prototype.at`, `:has()`, `structuredClone`, …). No polyfills, no feature detection, no older forms for older devices, and reject review findings that argue for them. Older support only when the user asks for it explicitly.
+The floor is the oldest browser that the stack builds for. Tailwind CSS 4 and Vite 8 set it: Safari and iOS 16.4, Chrome 111, Firefox 128. The project's `.browserslistrc` records it. Do not build for browsers below the floor.
+
+Code must work at the floor:
+
+1. Check each new platform API in MDN browser-compat-data, not from memory. `URL.parse` needs Safari 18, so it crashed sign-in on iOS 16 and 17.
+2. An API newer than the floor needs a polyfill, or a fallback branch marked `// FALLBACK: <who gets what>`.
+3. Below the floor, the app shows an update screen and does not start.
+
+[detect] The `browser-support/no-unsupported-api` lint rule enforces items 1 and 2 where the project has it. Reject review findings that ask for support below the floor.
 
 ### Visual design
 
