@@ -117,6 +117,8 @@ function useProduct(id: ProductId, options?: UseQueryOptions<Product>) {
 
 A route reads a hook and passes the result down. **Mapping query state into props is not wiring** — it belongs in the hook that owns the screen's view model: `pages/<page>/use-<thing>.ts` when one screen reads it, `features/<feature>/hooks/` when two or more do. `entities/` holds types, query factories, and pure derivations, and never imports React.
 
+**Entities receive domain values only.** An entity type or class never receives a query's or mutation's shape, imported or re-typed: no `status`, `variables`, `data`, `error`, or `isPending` fields. The hook that owns the query or mutation converts it first, such as `data → AdmittedCall` or `error → refused`. Fowler's domain classes wrap domain data and know nothing about how it was fetched.
+
 ```typescript
 // ❌ mapping in the route — 20 lines, still wrong
 const { data, error, hasNextPage, fetchNextPage, refetch } = useInfiniteQuery(conversationQueries.list())
