@@ -117,7 +117,23 @@ function useProduct(id: ProductId, options?: UseQueryOptions<Product>) {
 
 A route reads a hook and passes the result down. **Mapping query state into props is not wiring** — it belongs in the hook that owns the screen's view model: `pages/<page>/use-<thing>.ts` when one screen reads it, `features/<feature>/hooks/` when two or more do. `entities/` holds types, query factories, and pure derivations, and never imports React.
 
-**Entities receive domain values only.** An entity type or class never receives a query's or mutation's shape, imported or re-typed: no `status`, `variables`, `data`, `error`, or `isPending` fields. The hook that owns the query or mutation converts it first, such as `data → AdmittedCall` or `error → refused`. Fowler's domain classes wrap domain data and know nothing about how it was fetched.
+#### Domain model, data layer, and hooks
+
+Source: [Modularizing React Applications](https://martinfowler.com/articles/modularizing-react-apps.html) (Fowler and Qiu). Each layer has one job:
+
+| Layer | Job | Here |
+| --- | --- | --- |
+| View | Renders and calls callbacks. It does not know where data comes from. | components |
+| Hook | "A state machine behind a view." It holds state, takes events, calls the data layer, and gives the view domain objects and callbacks. | `features/*/hooks/`, `pages/*/use-*.ts` |
+| Domain model | Business rules on domain data, as types, pure functions, or classes with getters. It "isn't aware of the existence of views" and could run on the server. | `entities/` |
+| Data layer | Fetches and converts the response into domain objects ("fetch and convert"), so a change in the external shape stays in one file. | query and mutation factories (`queryFn`, `mutationFn`) |
+
+Rules that follow:
+
+1. **The domain model receives domain values only.** An entity type or class never receives a query's or mutation's shape, imported or re-typed: no `status`, `variables`, `data`, `error`, `isPending`, or `refetch`. Those describe how the data travels, not what the business means.
+2. **The data layer converts the payload; the hook converts the request state.** `queryFn` turns the response into domain objects. The hook turns TanStack state into domain facts before it builds an entity: `data → AdmittedCall`, `error → refused`, `status === "pending"` → no admitted call yet.
+3. **The hook joins; the domain model decides.** When several sources (queries, mutations, an SDK, local state) form one concept, the hook passes their domain values to one entity. The entity derives the rules, such as status or permissions. The hook holds no business rule itself.
+4. **A domain class is immutable.** The hook builds it during render from current values. It is never updated in place and never subscribed to.
 
 ```typescript
 // ❌ mapping in the route — 20 lines, still wrong
