@@ -91,7 +91,7 @@ Pages stay within 100 lines for app pages. Marketing pages may run longer; do no
 ## Component Architecture (Fowler layers)
 
 - **Components** — thin JSX, props/handlers only. <100 lines (aim 50).
-- **Hooks** — state/effects, two+ queries merged into a domain object, or a **presentation model** (see below). Do not wrap a single `queryOptions` in `useX()` *just to pass it through*: call `useSuspenseQuery` / `useQuery` on the factory or the bound route-context object, and put extra options (`select`, `staleTime`) at that call site. Do not accept `UseQueryOptions` as a hook argument — type inference breaks.
+- **Hooks** — state/effects, two+ queries merged into a domain object, or a **presentation model** (see below). A hook that only forwards one query and its call-site options is a pass-through: call `useSuspenseQuery` / `useQuery` on the factory or the bound route-context object instead, and put extra options (`select`, `staleTime`) at that call site. A hook around one query is justified when it owns a rule that several callers share, such as when to poll; name it by that purpose and return the query result unchanged, so callers keep `isPending`, `isError`, and `data`. Do not accept `UseQueryOptions` as a hook argument — type inference breaks. Source: [The Query Options API](https://tkdodo.eu/blog/the-query-options-api) — wrapper hooks "seem a bit pointless if all they do is" pass a query through.
 
 ```typescript
 // ✅ extra options at the call site
@@ -128,7 +128,9 @@ Source: [Modularizing React Applications](https://martinfowler.com/articles/modu
 | Domain model | Business rules on domain data, as types, pure functions, or classes with getters. It "isn't aware of the existence of views" and could run on the server. | `entities/` |
 | Data layer | Fetches and converts the response into domain objects ("fetch and convert"), so a change in the external shape stays in one file. | query and mutation factories (`queryFn`, `mutationFn`) |
 
-Rules that follow:
+Rules that follow. The article supports a domain object with no UI data, built from the fetched data. It does not cover loading or error state, so rules 1 and 2 about request state are house rules.
+
+A component that shows one query reads it directly and branches on `isPending`, `isError`, and `data` (see Async State Rendering). Request state becomes a domain fact only when it feeds an entity.
 
 1. **The domain model receives domain values only.** An entity type or class never receives a query's or mutation's shape, imported or re-typed: no `status`, `variables`, `data`, `error`, `isPending`, or `refetch`. Those describe how the data travels, not what the business means.
 2. **The data layer converts the payload; the hook converts the request state.** `queryFn` turns the response into domain objects. The hook turns TanStack state into domain facts before it builds an entity: `data → AdmittedCall`, `error → refused`, `status === "pending"` → no admitted call yet.
