@@ -331,15 +331,34 @@ export class Product extends Entity {
 }
 ```
 
-Mutations guard their transitions:
+Each state transition is one entity method:
+
+1. The method checks the rule and applies the change. A handler never calls an `is…` check and then a separate `record…` method.
+2. The method returns a tagged outcome union. A repeat returns an "already" value. A wrong state returns a refusal. Never return `void` with a silent `return`.
+3. A decision about the entity's own state is an outcome, not a handler branch. The handler maps the outcome to save, log, or reply.
+4. A pure query (`is…Due`, `to…Request`) changes nothing. Keep it public only when a handler needs it without a change.
 
 ```typescript
-markLive(): Result<void, PlaybookEditError> {
-  if (this.status === 'archived') return Result.err(new PlaybookEditError('archived'))
+export type MarkLiveOutcome =
+  | { readonly kind: 'live' }
+  | { readonly kind: 'alreadyLive' }
+  | { readonly kind: 'archived' }
+
+markLive(at: Date): MarkLiveOutcome {
+  if (this.status === 'live') return { kind: 'alreadyLive' }
+  if (this.status === 'archived') return { kind: 'archived' }
   this.status = 'live'
-  this.updatedAt = new Date()
-  return Result.ok()
+  this.updatedAt = at
+  return { kind: 'live' }
 }
+```
+
+The handler saves only when the state changed:
+
+```typescript
+const outcome = playbook.markLive(now)
+if (outcome.kind === 'archived') return { kind: 'archived' }
+if (outcome.kind === 'live') repository.save(playbook)
 ```
 
 ## `/core` Package Boundary
