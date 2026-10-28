@@ -68,8 +68,7 @@ Keep application wiring in `infrastructure/app-deps.ts`; bootstrap code supplies
 - **Every entry is a client for something outside the process** — database, queue, Durable Object, Workflow, external API. Group them: `services` (clients wrapped in our interfaces, e.g. `queueClient(): IQueueClient`), `clients` (raw SDK clients), `dos` (Durable Object clients), `workflows`. Never a raw binding type in the interface.
 - **A rule is not a dep, data is not a dep.** A policy object (`DestinationPolicy`, `RateTable`, allow-lists, config-fed decisions) belongs in the domain as a pure function; the handler reads its inputs from the database via `readDb` and calls it. Named after a message kind (`commands()`) is always wrong — name the capability.
 
-This example assumes the application returns a bare value and uses the existing throw-based contract.
-For internal Result handlers, use the established adapter conversion described under Error Handling.
+The application returns a bare value, and a failure throws.
 
 ```typescript
 // The shared function middleware owns error conversion.
@@ -87,7 +86,7 @@ export const createProduct = createServerFn({ method: 'POST' })
 ## Error Handling
 
 This skill owns transport contracts, error conversion, logging ownership, and external retries.
-Use [typescript-standards](../typescript-standards/SKILL.md) for internal Result types, schemas, and general module design.
+Use [typescript-standards](../typescript-standards/SKILL.md) for types, schemas, and general module design.
 
 Before editing a server function or stub:
 
@@ -99,10 +98,8 @@ Before editing a server function or stub:
 
 Read [transport contracts](references/transport-contracts.md) for server functions, HTTP, Durable Object RPC, or WebSockets.
 Read [error paths and retries](references/error-paths.md) when changing failure behavior or an external client.
-Read [RPC compatibility](references/rpc-compatibility.md) only when the existing boundary uses a result envelope.
 
 Current server functions return bare values. Shared middleware converts thrown failures to plain tagged payloads once.
-An internal Result becomes success or a typed throw at the adapter; it does not require a wire envelope.
 Reuse global middleware registration. Do not install a second error boundary in each function.
 Preserve Router redirects and not-found control flow through the existing middleware.
 
@@ -231,7 +228,7 @@ Single choke point from typed message to handler; the bus **routes**, it does no
 
 `[detect unit-of-work implementation]`:
 - **D1**: no interactive transactions — receipt + writes + outbox staged into one `db.batch()`, committed with retry; receipt UNIQUE violation → `DuplicateMessageError`.
-- **Postgres**: real tx; Result-based with a rollback bridge (store `Result.err` → `tx.rollback()` → return stored err), branded `Tx` type, events collected via AsyncLocalStorage.
+- **Postgres**: real tx; a thrown error rolls it back, branded `Tx` type, events collected via AsyncLocalStorage.
 
 Transaction rules:
 - **No cross-boundary I/O inside a tx** — no fetch/queue/R2 while holding a connection (Hyperdrive pool exhaustion).
@@ -274,12 +271,11 @@ Writes and entity reads go through repositories.
 
 ```typescript
 export class ProductRepository implements IProductRepository {
-  async byId(id: ProductId, userId: UserId) {
+  async byId(id: ProductId, userId: UserId): Promise<Product | null> {
     const row = await this.db.query.product.findFirst({
       where: and(eq(product.id, id), eq(product.userId, userId)),
     })
-    if (!row) return Result.err(new EntityNotFoundError('Product', id))
-    return Result.ok(this.toDomain(row))
+    return row === undefined ? null : this.toDomain(row)
   }
 
   private toDomain(row: DbProduct): Product {
@@ -312,7 +308,7 @@ Entity pattern only where there's identity + state transitions + invariants; pla
 - `create`, `restore`, and state transitions must use the same invariant validation.
 - `restore` rebuilds domain state without emitting domain events.
 - Domain entities must not import database types or expose `fromPersistence` and `toPersistence` methods.
-- `static create(...)` — current generation returns `Result<Entity, ValidationError>` (throw = bug only); older generation throws on invariant violation.
+- `static create(...)` throws a domain error on an invariant violation.
 
 ```typescript
 export class Product extends Entity {

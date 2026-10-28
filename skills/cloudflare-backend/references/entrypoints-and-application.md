@@ -32,7 +32,6 @@ export const getPostFn = createServerFn({ method: 'GET' })
 ```
 
 The server function owns input validation and dispatch. The query handler owns the read use case.
-This example assumes a bare application value. For Result handlers, use the existing adapter conversion.
 Shared error middleware owns the failure payload. Read [transport contracts](transport-contracts.md) before changing this boundary.
 
 ### Queue consumer example

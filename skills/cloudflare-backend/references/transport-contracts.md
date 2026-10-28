@@ -19,9 +19,8 @@ Never wrap a success value in an envelope by default. Each transport already rep
 
 1. A Durable Object method fails by throwing its tagged error. The receiving boundary identifies it by schema — an `Error` whose `_tag` is in the domain table and whose `remote` is `true` — never by `instanceof`, never by message text.
 2. Platform failure stays a throw too. workerd's own flags (`retryable`, `overloaded`) survive on the error for the retry classifier.
-3. Never return a `Result` instance. Its methods do not survive structured clone.
-4. Return a union only when the failure is ordinary data every caller handles inline (expected absence, stale work) — never to smuggle error types the transport already carries.
-5. The caller lists the tags that one call can answer with and builds the real error for each. Collapse an unlisted tag into the generic failure. Never look tags up in a shared table: a listed tag says what this call can do, and an unexpected one is a change to notice.
+3. Return a union only when the failure is ordinary data every caller handles inline (expected absence, stale work) — never to smuggle error types the transport already carries.
+4. The caller lists the tags that one call can answer with and builds the real error for each. Collapse an unlisted tag into the generic failure. Never look tags up in a shared table: a listed tag says what this call can do, and an unexpected one is a change to notice.
 
 **WebSocket.** Use JSON-RPC 2.0 for the envelope. It is transport-agnostic and domain-free. Frames are `call`, `result`, `error`, and `notification`.
 
@@ -52,9 +51,7 @@ Use the existing helper to preserve Router control flow, normalize validation fa
 
 Inspect the app's `src/start.ts` and `src/server/entrypoints/middleware/error.middleware.ts`.
 Follow their imports into the payload definitions and installed middleware implementation.
-If that middleware uses an envelope contract, read [RPC compatibility](rpc-compatibility.md) before copying it.
 
-If application code returns Result, the adapter extracts success or throws the typed error to shared middleware.
 The middleware serializes the final error once. Query and mutation functions consume bare success values directly.
 
 ## HTTP status mapping

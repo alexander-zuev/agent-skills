@@ -30,8 +30,7 @@ An external boundary is a client for a binding, SDK, or remote API. It owns retr
 High-volume retry policies need overload control, such as a retry budget, token bucket, or circuit breaker.
 
 Use the project's retry primitive rather than implementing a new loop.
-This example uses an existing throw-based adapter contract.
-For an internal Result port, return its typed failure after retry classification. The transport alone chooses the wire failure channel.
+A failure throws after retry classification. The transport alone chooses the wire failure channel.
 
 ```typescript
 async function executeBoundary<T>(work: () => Promise<T>): Promise<T> {
