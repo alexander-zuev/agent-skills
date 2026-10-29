@@ -327,7 +327,59 @@ export class Product extends Entity {
 }
 ```
 
-Each state transition is one entity method:
+### Entity generations
+
+Two generations exist. Write new entities and refactored commands as event-folded entities. Do not mix both styles in one command.
+
+Both generations are state-stored: the repository saves the state, never an event log. `decide`, `evolve`, and `apply` only make each state change explicit. This is not event sourcing; nothing replays events to rebuild state.
+
+**Event-folded entity (current).** It extends `EvolvingEntity` (`domain/evolving-entity.ts`). Reference: `VoiceAgentConversation`.
+
+1. **State** is a tagged union on `status`. Each fact exists only in the status that has it. State holds only the facts `decide` needs. Put facts for reporting in a view.
+2. **Command method.** A public method calls `this.apply(this.decide.X(...))` and returns a named reply. It never returns events.
+3. **Reply.** Make the reply after `apply`, from the decided events and the new state. Never check a rule again in the command method.
+4. **`decide`** is a private map with one rule for each command. It reads only the entity's state and its arguments. Time and outside facts come in as arguments, such as `now`. It returns events from `createEvent`. An empty list means "nothing to do", not a rejection.
+5. **Rejection.** A rejection means the caller is wrong. `decide` throws a tagged `AppError` subclass, and the handler catches it with `instanceof`. A normal repeat or race is a reply.
+6. **`evolve`** is a protected map with one handler for each event: `satisfies Evolve<State, Event>`. It is the only writer of state after `create`. It cannot refuse. A narrowing helper, such as `mustBeLive`, throws a tagged defect error for a wrong state, because only a defect in `decide` gets there.
+7. **`apply`** folds each event into the state in array order, then raises it with `addEvent`.
+8. **`create()`** returns the initial state and raises no event. Creation becomes a command only when a subscriber needs its event or the creation can be refused.
+9. **Events.** Each event is a `DomainEvent` with an explicit schema in the messages file. A Postgres repository dispatches raised events to the outbox. Durable Object storage has no outbox, so its events stay in memory.
+10. **Queries** stay plain read-only methods. Add a view only for a question across many aggregates, or in another shape.
+
+```typescript
+// 1. Each fact exists only in its status.
+type ConversationState =
+  | { status: 'starting' }
+  | { status: 'live'; currentSessionId: VoiceAgentSessionId; greetedAt: Timestamptz | null }
+  | { status: 'ending'; reason: string; speechEndsAt: Timestamptz }
+
+// 2–3. The command applies the decided events; the reply reads the events, then the state.
+endConversation(at: Date, reason: string, speechEndsAt: Date): EndConversationReply {
+  const events = this.apply(this.decide.EndConversation(at, reason, speechEndsAt))
+  if (events.length > 0) return { kind: 'ending' }
+  return this.isEnding ? { kind: 'alreadyEnding' } : { kind: 'notLive' }
+}
+
+// 4. decide: state and arguments in, events out.
+private readonly decide = {
+  EndConversation: (at: Date, reason: string, speechEndsAt: Date): EndRequested[] =>
+    this.data.state.status === 'live'
+      ? [createEvent('EndRequested', { callId: this.id, reason, occurredAt: toTimestamptz(at), speechEndsAt: toTimestamptz(speechEndsAt) })]
+      : [],
+}
+
+// 6. evolve: a status change builds the new state; the helper throws a tagged defect error.
+protected readonly evolve = {
+  EndRequested: (state, event) => ({
+    status: 'ending',
+    currentConversationId: this.mustBeLive(state).currentConversationId,
+    reason: event.reason,
+    speechEndsAt: event.speechEndsAt,
+  }),
+} satisfies Evolve<ConversationState, ConversationEvent>
+```
+
+**Legacy entity.** Its methods write state directly and return a tagged outcome union. Keep these rules when you touch one without a refactor. Do not write new entities this way.
 
 1. The method checks the rule and applies the change. A handler never calls an `is…` check and then a separate `record…` method.
 2. The method returns a tagged outcome union. A repeat returns an "already" value. A wrong state returns a refusal. Never return `void` with a silent `return`.

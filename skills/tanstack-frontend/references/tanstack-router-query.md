@@ -104,12 +104,15 @@ The route `context` option requires a Router version that supports it. Check the
 
 ## Choose loader timing
 
-| Need | Loader | Observer | Result |
+An SSR route uses exactly one of three patterns for each query:
+
+| Pattern | Loader | Observer | Loading and error |
 |---|---|---|---|
-| Critical SSR data | Await `query({ ...options, staleTime: 'static' })` | `useSuspenseQuery` | Blocks the route until data exists. Throw → route `errorComponent`. |
-| Non-blocking warm cache | `void query(options).catch(noop)` | `useQuery` | Failure stays in the page. The page owns `pending`. |
-| Streamed SSR data | Start `query()` without awaiting it | `useSuspenseQuery` | Streams data without blocking the route |
-| Client loading state | Start without awaiting, or omit loader work | `useQuery` | Page renders its own pending state |
+| 1. Await | Return or await `query({ ...options, staleTime: 'static' })` | `useSuspenseQuery` | The route waits for the data. A failure goes to the route `errorComponent`. |
+| 2. Stream | `void query(options).catch(noop)` | `useSuspenseQuery` under local boundaries | The page renders at once. The local `Suspense` fallback shows until the streamed data arrives. A failure stays in the local error boundary. |
+| 3. Client only | No loader work | `useQuery` | The server and the first client render are both `pending`. The browser fetches after hydration. |
+
+Never read a query that a loader starts without awaiting with `useQuery` on the first render. The loader snapshot dehydrates the query as pending, and the read can finish before or after the server renders the component. The browser can hydrate either state, so `useQuery` can render different HTML than the server did. React then fails hydration (error #418) and the route error boundary replaces the page. Fast local databases hide this race.
 
 Plain `useQuery` does not execute during SSR. Loader prefetches and `useSuspenseQuery` participate in SSR and streaming.
 
@@ -117,11 +120,48 @@ Always observe Query-owned data with `useQuery` or `useSuspenseQuery`. Do not re
 
 ## Boundaries
 
-Route-bound queries use `pendingComponent`, `errorComponent`, and the router-wide `defaultErrorComponent`.
+`useSuspenseQuery` moves the loading and error states out of the component. `data` is always defined, and `status` is never `pending`. On the first load, the component suspends to the nearest `Suspense` and throws to the nearest error boundary. A failed background refetch keeps the old `data` and does not throw.
 
-A standalone widget can own local Suspense and error boundaries. Use the Sentry `ErrorBoundary` when the repository provides it.
+Route-wide data (pattern 1) uses the route `pendingComponent`, `errorComponent`, and the router-wide `defaultErrorComponent`.
 
-Do not force every `useSuspenseQuery` component to add local boundaries. Route boundaries already own route failures.
+Every other `useSuspenseQuery` component sits inside its own boundaries, so one failed piece of a page never replaces the route. The piece the page renders owns its frame and wraps one slot with `QueryErrorResetBoundary`, an error boundary, and `Suspense`, in that order:
+
+```tsx
+// The piece: frame + boundaries. The page renders <CallLimit />.
+function CallLimit() {
+  return (
+    <Card>
+      <CardHeader>…title and hint…</CardHeader>
+      <CardContent className="min-h-11">
+        <QueryErrorResetBoundary>
+          {({ reset }) => (
+            <CatchBoundary
+              getResetKey={() => 'call-limit'}
+              errorComponent={({ reset: resetBoundary }) => (
+                <CallLimitError onRetry={() => { reset(); resetBoundary() }} />
+              )}
+            >
+              <Suspense fallback={<CallLimitLoading />}>
+                <CallLimitSteps />
+              </Suspense>
+            </CatchBoundary>
+          )}
+        </QueryErrorResetBoundary>
+      </CardContent>
+    </Card>
+  )
+}
+
+// The data state: the only component that calls useSuspenseQuery.
+function CallLimitSteps() {
+  const { data } = useSuspenseQuery(callingProfileQueries.current())
+  return <ToggleGroup className="grid grid-cols-2 gap-2 sm:grid-cols-5">…</ToggleGroup>
+}
+```
+
+`QueryErrorResetBoundary` resets the query error, so the retry fetches again. Use the repository's error boundary; use TanStack Router `CatchBoundary` when it has none.
+
+The layout of the slot, its states, and their names are in "State layout" under "Async State Rendering" in [SKILL.md](../SKILL.md).
 
 ## Router subscriptions
 
@@ -134,6 +174,8 @@ Use `select` to subscribe to the smallest required value. This reduces renders f
 ## Sources
 
 - [TanStack Query integration](https://tanstack.com/router/latest/docs/integrations/query)
+- [TanStack Query Suspense: resetting error boundaries](https://tanstack.com/query/latest/docs/framework/react/guides/suspense#resetting-error-boundaries)
+- [React Suspense](https://react.dev/reference/react/Suspense)
 - [TanStack Router data loading](https://tanstack.com/router/latest/docs/guide/data-loading)
 - [TanStack Router path params](https://tanstack.com/router/latest/docs/guide/path-params)
 - [TanStack Router render optimizations](https://tanstack.com/router/latest/docs/guide/render-optimizations)

@@ -130,7 +130,7 @@ Source: [Modularizing React Applications](https://martinfowler.com/articles/modu
 
 Rules that follow. The article supports a domain object with no UI data, built from the fetched data. It does not cover loading or error state, so rules 1 and 2 about request state are house rules.
 
-A component that shows one query reads it directly and branches on `isPending`, `isError`, and `data` (see Async State Rendering). Request state becomes a domain fact only when it feeds an entity.
+A component that shows one query reads it directly: with `useQuery` it branches on `isPending`, `isError`, and `data`; with `useSuspenseQuery` its boundaries own loading and errors (see Async State Rendering). Request state becomes a domain fact only when it feeds an entity.
 
 1. **The domain model receives domain values only.** An entity type or class never receives a query's or mutation's shape, imported or re-typed: no `status`, `variables`, `data`, `error`, `isPending`, or `refetch`. Those describe how the data travels, not what the business means.
 2. **The data layer converts the payload; the hook converts the request state.** `queryFn` turns the response into domain objects. The hook turns TanStack state into domain facts before it builds an entity: `data → AdmittedCall`, `error → refused`, `status === "pending"` → no admitted call yet.
@@ -243,7 +243,7 @@ Use `infiniteQueryOptions`. Give it a key that is not the normal list key. Set `
 
 - Entity: owns query factories, query keys, requests, and domain conversion. It does not import Router APIs.
 - Route: validates URL state and binds all query inputs for the current route match.
-- Loader: starts cache work with the bound query options. **Throw vs swallow is a UX decision, not a preference.** Await `queryClient.query(options)` (or `query({ ...options, staleTime: 'static' })` when cached data must win even if stale). A throw replaces the whole route via `errorComponent`. Swallow with `.catch(noop)` so the failure stays in the page layout — the component then owns `pending` too, because suspense no longer covers it. Pick swallow when the shell (header, nav, actions) should survive a failed read. `ensureQueryData` / `prefetchQuery` / `fetchQuery` are deprecated aliases and go away in Query v6.
+- Loader: starts cache work with the bound query options. Each query uses one of three SSR patterns: **await** (return or await `query({ ...options, staleTime: 'static' })`, then `useSuspenseQuery`; a failure replaces the route via `errorComponent`), **stream** (`void query(options).catch(noop)`, then `useSuspenseQuery` inside local `QueryErrorResetBoundary`, error boundary, and `Suspense`; a failure stays in that piece of the page), or **client only** (no loader work, then `useQuery`). Never read a non-awaited loader query with `useQuery`: the server and the browser can render different states, and hydration fails. `ensureQueryData` / `prefetchQuery` / `fetchQuery` are deprecated aliases and go away in Query v6.
 - Page: observes the bound query with `useQuery` or `useSuspenseQuery`.
 - Feature: consumes domain data and owns user actions.
 
@@ -346,8 +346,8 @@ Mutually exclusive states = separate branches. Never nested ternaries.
 | Data source | Pattern |
 |---|---|
 | Route loader (critical) | `pendingComponent` / `errorComponent` config |
-| `useQuery` in component | Early returns |
-| Multiple async sources | Suspense + ErrorBoundary composition |
+| `useSuspenseQuery` for one piece of a page | Local `QueryErrorResetBoundary` + error boundary + `Suspense` at the call site |
+| `useQuery` with no loader work (client only) | Early returns |
 
 ```typescript
 function Component() {
@@ -358,11 +358,34 @@ function Component() {
 }
 ```
 
+### State layout
+
+A piece of a page that reads data has one frame and one slot. The slot holds every state: loading, data, empty, no match, and error.
+
+1. Design the frame and the slot first. The frame (card, heading, description, search, page actions) renders outside the boundaries, so it shows at once and never changes.
+2. Give the slot a minimum height equal to the data state's height. Every state fills the slot. A state never sets its own height or its position on the page.
+3. Every state starts at the same point: the top of the slot. Inside its area, a state places its content as its UX needs, for example centered.
+4. The loading state copies the data state's shape: the same rows or grid and the same item heights, not one generic bar. Loading rows never go inside the border of an empty state.
+5. Empty, no match, and error use one shared component with the same parts. Icon, title, and description are required. Actions are optional. The error sets `role="alert"`.
+6. The shared component places its icon at the same point in every state. Do not center it vertically: an optional action, such as Retry, moves centered content.
+7. Each piece has one story per state. Compare all states side by side in Storybook or the app before you report the work as done.
+
+Name each part by its role:
+
+| Role | Name |
+|---|---|
+| The piece the page renders: frame and boundaries | The plain name of the piece, such as `CallLimit` |
+| The data state that calls `useSuspenseQuery` | Named by what it shows, such as `CallLimitSteps` or `CallList` |
+| The loading state | The piece name + `Loading` |
+| The error state | The piece name + `Error` |
+
+[TanStack Router + Query](references/tanstack-router-query.md#boundaries) shows the frame, slot, and boundaries in code.
+
 ### Query rendering and boundaries
 
-An awaited loader query blocks the route for critical data. An unawaited query can stream with Suspense or remain non-blocking with `useQuery`.
+An awaited loader query blocks the route for critical data. An unawaited loader query streams only through `useSuspenseQuery`; never read it with `useQuery`.
 
-Route queries use Router pending and error boundaries. Standalone widgets can own local Suspense and error boundaries.
+Route-wide queries use Router pending and error boundaries. Every other `useSuspenseQuery` component has its own local boundaries, so one failed piece never replaces the route.
 
 Use `getRouteApi` or a strict `from` route. Use `select` to subscribe to the smallest required Router state.
 
