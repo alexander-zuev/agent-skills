@@ -453,6 +453,7 @@ Follow the project's localization system.
 When UI items form a pair or a set, make them symmetrical: labels, section titles, buttons, statuses, and their icons and colors.
 Use the same structure for each item and change only the part that differs. Use true antonyms for opposites, such as can and cannot, or add and remove.
 Import Phosphor icons with the `Icon` suffix, such as `PlusIcon` and `MagnifyingGlassIcon`.
+Never use `PlugsConnectedIcon` or `WarningCircleIcon`. Use `UserGearIcon` for managing accounts and `WarningIcon` for a warning.
 
 Do not use `||` to hide missing data or error states. Refine the type or parse the input.
 Legitimate product defaults remain allowed.
