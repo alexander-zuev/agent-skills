@@ -450,6 +450,8 @@ Stack: **Tailwind CSS v4** (`@theme`) + **`@radix-ui/colors`** scales + **shadcn
 UI copy has no final period: labels, buttons, hints, validation errors, toasts, leads, and empty states.
 Join two clauses with a comma or use one clause. Emails, legal pages, articles, and SEO descriptions use sentence punctuation.
 Follow the project's localization system.
+When UI items form a pair or a set, make them symmetrical: labels, section titles, buttons, statuses, and their icons and colors.
+Use the same structure for each item and change only the part that differs. Use true antonyms for opposites, such as can and cannot, or add and remove.
 Import Phosphor icons with the `Icon` suffix, such as `PlusIcon` and `MagnifyingGlassIcon`.
 
 Do not use `||` to hide missing data or error states. Refine the type or parse the input.

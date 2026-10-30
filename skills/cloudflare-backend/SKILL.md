@@ -336,10 +336,10 @@ Both generations are state-stored: the repository saves the state, never an even
 **Event-folded entity (current).** It extends `EvolvingEntity` (`domain/evolving-entity.ts`). Reference: `VoiceAgentConversation`.
 
 1. **State** is a tagged union on `status`. Each fact exists only in the status that has it. State holds only the facts `decide` needs. Put facts for reporting in a view.
-2. **Command method.** A public method calls `this.apply(this.decide.X(...))` and returns a named reply. It never returns events.
+2. **Command method.** A public method calls `this.apply(this.decide.X(...))` and returns a named reply only when the handler or caller reads it; otherwise `void`. It never returns events.
 3. **Reply.** Make the reply after `apply`, from the decided events and the new state. Never check a rule again in the command method.
 4. **`decide`** is a private map with one rule for each command. It reads only the entity's state and its arguments. Time and outside facts come in as arguments, such as `now`. It returns events from `createEvent`. An empty list means "nothing to do", not a rejection.
-5. **Rejection.** A rejection means the caller is wrong. `decide` throws a tagged `AppError` subclass, and the handler catches it with `instanceof`. A normal repeat or race is a reply.
+5. **Rejection.** A rejection means the caller is wrong. `decide` throws a tagged `AppError` subclass, and the handler catches it with `instanceof`. A normal repeat or race does not throw.
 6. **`evolve`** is a protected map with one handler for each event: `satisfies Evolve<State, Event>`. It is the only writer of state after `create`. It cannot refuse. A narrowing helper, such as `mustBeLive`, throws a tagged defect error for a wrong state, because only a defect in `decide` gets there.
 7. **`apply`** folds each event into the state in array order, then raises it with `addEvent`.
 8. **`create()`** returns the initial state and raises no event. Creation becomes a command only when a subscriber needs its event or the creation can be refused.
